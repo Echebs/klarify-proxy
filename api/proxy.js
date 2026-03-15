@@ -96,6 +96,18 @@ export default async function handler(req) {
 
     const data = await geminiRes.json();
 
+    // If Gemini returned an error object, extract the message as a plain string
+    // so the browser always gets a readable error, never [object Object]
+    if (data.error) {
+      const msg = typeof data.error === 'string'
+        ? data.error
+        : (data.error.message || data.error.status || JSON.stringify(data.error));
+      return new Response(
+        JSON.stringify({ error: msg }),
+        { status: geminiRes.status || 400, headers: { ...cors, 'Content-Type': 'application/json' } }
+      );
+    }
+
     return new Response(
       JSON.stringify(data),
       {
